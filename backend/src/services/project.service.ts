@@ -102,7 +102,7 @@ export const createProjectWithFolder = async (
   title: string,
   location: string
 ) => {
-  // 1. Create project
+  
   const result = await pool.query(
     `INSERT INTO projects (title, location)
      VALUES ($1, $2)
@@ -113,7 +113,7 @@ export const createProjectWithFolder = async (
   const projectId = result.rows[0].id;
   const folder = `projects/project_${projectId}`;
 
-  // 2. Update folder
+  
   const updated = await pool.query(
     `UPDATE projects
      SET cloudinary_folder = $1

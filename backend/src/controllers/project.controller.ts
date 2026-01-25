@@ -8,7 +8,7 @@ import { getProjectFolder } from "../services/project.service";
 import { deleteProjectImage } from "../services/project.service";
 import { createProjectWithFolder } from "../services/project.service";
 
-// Create a new project
+
 export const createProjectController = async (req: Request, res: Response) => {
   const { title, location } = req.body;
 
@@ -38,7 +38,7 @@ export const uploadImagesController = async (req: Request, res: Response) => {
 };
 
 
-// Get all projects with their images
+
 export const getProjectsController = async (req: Request, res: Response) => {
   const projects = await getAllProjectsWithImages();
   res.json(projects);
