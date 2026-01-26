@@ -15,7 +15,6 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.93.1",
-    "@types/node": "^20.19.30",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -29,6 +28,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
+    "@types/node": "^25.0.10",
     "@types/nodemailer": "^7.0.5",
     "@types/pg": "^8.16.0",
     "ts-node-dev": "^2.0.0",
