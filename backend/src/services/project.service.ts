@@ -1,5 +1,7 @@
 import cloudinary from "../config/cloudinary.config";
 import { pool } from "../config/db";
+import { supabase } from "../config/supabase";
+import fs from "fs";
 
 // Create a project
 export const createProject = async (
@@ -7,14 +9,15 @@ export const createProject = async (
   location: string,
   folder: string
 ) => {
-  const result = await pool.query(
-    `INSERT INTO projects (title, location, cloudinary_folder)
-     VALUES ($1, $2, $3)
-     RETURNING *`,
-    [title, location, folder]
-  );
+  // Use Postgres via Supabase
+  const { data, error } = await supabase
+    .from("projects")
+    .insert([{ title, location, cloudinary_folder: folder }])
+    .select()
+    .single();
 
-  return result.rows[0];
+  if (error) throw error;
+  return data;
 };
 
 // Upload multiple images for a project
@@ -23,24 +26,29 @@ export const uploadProjectImages = async (
   files: Express.Multer.File[],
   folder: string
 ) => {
-  const uploadedImages = [];
+  const uploadedImages: Array<{ id: number; publicId: string; url: string }> = [];
 
   for (const file of files) {
     const upload = await cloudinary.uploader.upload(file.path, { folder });
 
-   const result = await pool.query(
-  `INSERT INTO project_images (project_id, public_id, secure_url)
-   VALUES ($1, $2, $3)
-   RETURNING id`,
-  [projectId, upload.public_id, upload.secure_url]
-);
+    const { data, error } = await supabase
+      .from("project_images")
+      .insert([
+        { project_id: projectId, public_id: upload.public_id, secure_url: upload.secure_url },
+      ])
+      .select()
+      .single();
 
-uploadedImages.push({
-  id: result.rows[0].id,   
-  publicId: upload.public_id,
-  url: upload.secure_url,
-});
+    if (error) throw error;
 
+    uploadedImages.push({ id: data.id, publicId: upload.public_id, url: upload.secure_url });
+
+    // remove temp file
+    try {
+      fs.unlinkSync(file.path);
+    } catch (e) {
+      // ignore
+    }
   }
 
   return uploadedImages;
@@ -49,79 +57,79 @@ uploadedImages.push({
 
 // Get all projects with images
 export const getAllProjectsWithImages = async () => {
-  const result = await pool.query(`
-    SELECT 
-      p.id,
-      p.title,
-      p.location,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', i.id,
-            'url', i.secure_url,
-            'publicId', i.public_id
-          )
-          ORDER BY i.created_at
-        ) FILTER (WHERE i.id IS NOT NULL),
-        '[]'
-      ) AS images
-    FROM projects p
-    LEFT JOIN project_images i ON p.id = i.project_id
-    GROUP BY p.id
-    ORDER BY p.created_at DESC
-  `);
+  const { data, error } = await supabase
+    .from("projects")
+    .select(`
+      id,
+      title,
+      location,
+      project_images (
+        id,
+        secure_url,
+        public_id
+      )
+    `)
+    .order("id", { ascending: false }); // safest order
 
-  return result.rows;
+  if (error) {
+    console.error("GET PROJECTS ERROR:", error);
+    throw error;
+  }
+
+  return data.map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    location: p.location,
+    images: (p.project_images || []).map((i: any) => ({
+      id: i.id,
+      url: i.secure_url,
+      publicId: i.public_id,
+    })),
+  }));
 };
 
+
 export const deleteProjectImage = async (imageId: number) => {
-  const result = await pool.query(
-    `SELECT public_id FROM project_images WHERE id = $1`,
-    [imageId]
-  );
+  const { data, error } = await supabase.from('project_images').select('public_id').eq('id', imageId).single();
+  if (error) throw error;
+  if (!data) return;
 
-  if (!result.rows.length) return;
-
-  const { public_id } = result.rows[0];
+  const { public_id } = data as { public_id: string };
 
   await cloudinary.uploader.destroy(public_id);
 
-  await pool.query(
-    `DELETE FROM project_images WHERE id = $1`,
-    [imageId]
-  );
+  await supabase.from('project_images').delete().eq('id', imageId);
 };
 export const getProjectFolder = async (projectId: number) => {
-  const result = await pool.query(
-    `SELECT cloudinary_folder FROM projects WHERE id = $1`,
-    [projectId]
-  );
-  return result.rows[0]?.cloudinary_folder;
+  const { data, error } = await supabase.from('projects').select('cloudinary_folder').eq('id', projectId).single();
+  if (error) throw error;
+  return data?.cloudinary_folder;
 };
 export const createProjectWithFolder = async (
   title: string,
   location: string
 ) => {
   
-  const result = await pool.query(
-    `INSERT INTO projects (title, location)
-     VALUES ($1, $2)
-     RETURNING id, title, location`,
-    [title, location]
-  );
+  const { data, error } = await supabase
+    .from('projects')
+    .insert([{ title, location }])
+    .select('id, title, location')
+    .single();
 
-  const projectId = result.rows[0].id;
+  if (error) throw error;
+
+  const projectId = data.id;
   const folder = `projects/project_${projectId}`;
 
-  
-  const updated = await pool.query(
-    `UPDATE projects
-     SET cloudinary_folder = $1
-     WHERE id = $2
-     RETURNING *`,
-    [folder, projectId]
-  );
+  const { data: updated, error: updateError } = await supabase
+    .from('projects')
+    .update({ cloudinary_folder: folder })
+    .eq('id', projectId)
+    .select()
+    .single();
 
-  return updated.rows[0];
+  if (updateError) throw updateError;
+
+  return updated;
 };
 

@@ -9,12 +9,30 @@ import { deleteProjectImage } from "../services/project.service";
 import { createProjectWithFolder } from "../services/project.service";
 
 
-export const createProjectController = async (req: Request, res: Response) => {
-  const { title, location } = req.body;
+export const createProjectController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { title, location } = req.body;
 
-  const project = await createProjectWithFolder(title, location);
-  res.status(201).json(project);
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    const project = await createProjectWithFolder(title, location);
+
+    return res.status(201).json(project);
+  } catch (error: any) {
+    console.error("CREATE PROJECT ERROR:", error);
+
+    return res.status(500).json({
+      message: "Failed to create project",
+      error: error.message ?? error
+    });
+  }
 };
+
 
 
 
