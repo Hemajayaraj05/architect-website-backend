@@ -5,7 +5,14 @@ import { contactLimiter } from "./middlewares/ratelimit.middleware";
 import ProjectRoutes from "./routes/project.routes";
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["POST", "GET"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/contact",contactLimiter,contactRoutes);
