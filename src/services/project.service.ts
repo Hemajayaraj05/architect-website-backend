@@ -14,7 +14,6 @@ export const createProject = async (title: string, location: string, folder: str
   return data;
 };
 
-
 export const uploadProjectImages = async (
   projectId: number,
   files: Express.Multer.File[],
@@ -24,12 +23,9 @@ export const uploadProjectImages = async (
 
   for (const file of files) {
     const upload = await cloudinary.uploader.upload(file.path, { folder });
-
     const { data, error } = await supabase
       .from("project_images")
-      .insert([
-        { project_id: projectId, public_id: upload.public_id, secure_url: upload.secure_url },
-      ])
+      .insert([{ project_id: projectId, public_id: upload.public_id, secure_url: upload.secure_url }])
       .select()
       .single();
 
@@ -37,11 +33,7 @@ export const uploadProjectImages = async (
 
     uploadedImages.push({ id: data.id, publicId: upload.public_id, url: upload.secure_url });
 
-    try {
-      fs.unlinkSync(file.path);
-    } catch (e) {
-      console.error("FILE DELETE ERROR:", e);
-    }
+    try { fs.unlinkSync(file.path); } catch (e) { console.error("FILE DELETE ERROR:", e); }
   }
 
   return uploadedImages;

@@ -7,7 +7,7 @@ import {
   getProjectFolder,
 } from "../services/project.service";
 
-
+import { MulterRequest } from "../types/express";
 export const createProjectController = async (req: Request, res: Response) => {
   try {
     const { title, location } = req.body;
@@ -29,21 +29,17 @@ export const createProjectController = async (req: Request, res: Response) => {
 };
 
 
-export const uploadImagesController = async (req: Request, res: Response) => {
+export const uploadImagesController = async (req: MulterRequest, res: Response) => {
   const projectId = Number(req.params.projectId);
+  const files = req.files; // now TS knows this exists
 
- 
-  const files = req.files as any[];
-
-  if (!files || files.length === 0) {
+  if (!files || files.length === 0)
     return res.status(400).json({ message: "No images provided" });
-  }
 
   const folder = await getProjectFolder(projectId);
   if (!folder) return res.status(404).json({ message: "Project not found" });
 
   const imageUrls = await uploadProjectImages(projectId, files, folder);
-
   res.json(imageUrls);
 };
 
