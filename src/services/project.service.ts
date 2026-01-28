@@ -1,5 +1,5 @@
 import cloudinary from "../config/cloudinary.config";
-import { pool } from "../config/db";
+
 import { supabase } from "../config/supabase";
 import fs from "fs";
 

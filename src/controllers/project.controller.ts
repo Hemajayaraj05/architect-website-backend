@@ -1,18 +1,14 @@
 import { Request, Response } from "express";
 import {
-  createProject,
+  createProjectWithFolder,
   uploadProjectImages,
   getAllProjectsWithImages,
+  deleteProjectImage,
+  getProjectFolder,
 } from "../services/project.service";
-import { getProjectFolder } from "../services/project.service";
-import { deleteProjectImage } from "../services/project.service";
-import { createProjectWithFolder } from "../services/project.service";
 
 
-export const createProjectController = async (
-  req: Request,
-  res: Response
-) => {
+export const createProjectController = async (req: Request, res: Response) => {
   try {
     const { title, location } = req.body;
 
@@ -25,26 +21,22 @@ export const createProjectController = async (
     return res.status(201).json(project);
   } catch (error: any) {
     console.error("CREATE PROJECT ERROR:", error);
-
     return res.status(500).json({
       message: "Failed to create project",
-      error: error.message ?? error
+      error: error.message ?? error,
     });
   }
 };
 
 
-
-
 export const uploadImagesController = async (req: Request, res: Response) => {
   const projectId = Number(req.params.projectId);
-  console.log("PARAM projectId:", req.params.projectId);
+
   if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
     return res.status(400).json({ message: "No images provided" });
   }
 
   const folder = await getProjectFolder(projectId);
-   console.log("FOLDER FROM DB:", folder);
   if (!folder) {
     return res.status(404).json({ message: "Project not found" });
   }
@@ -56,11 +48,16 @@ export const uploadImagesController = async (req: Request, res: Response) => {
 };
 
 
-
 export const getProjectsController = async (req: Request, res: Response) => {
-  const projects = await getAllProjectsWithImages();
-  res.json(projects);
+  try {
+    const projects = await getAllProjectsWithImages();
+    res.json(projects);
+  } catch (error: any) {
+    console.error("GET PROJECTS ERROR:", error);
+    res.status(500).json({ message: "Failed to fetch projects", error: error.message });
+  }
 };
+
 
 export const deleteImageController = async (req: Request, res: Response) => {
   try {
@@ -69,9 +66,8 @@ export const deleteImageController = async (req: Request, res: Response) => {
 
     await deleteProjectImage(imageId);
     res.json({ message: "Image deleted successfully" });
-  } catch {
-    res.status(400).json({ message: "Failed to delete image" });
+  } catch (error: any) {
+    console.error("DELETE IMAGE ERROR:", error);
+    res.status(400).json({ message: "Failed to delete image", error: error.message });
   }
 };
-
-
