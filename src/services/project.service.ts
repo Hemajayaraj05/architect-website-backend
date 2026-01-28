@@ -1,6 +1,8 @@
 import cloudinary from "../config/cloudinary.config";
 import { supabase } from "../config/supabase";
 import fs from "fs";
+import type { Request } from "express";
+
 
 export const createProjectWithFolder = async (title: string, location: string) => {
   const { data, error } = await supabase
