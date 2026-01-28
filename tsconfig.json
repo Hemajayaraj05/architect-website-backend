@@ -1,14 +1,10 @@
 {
   "compilerOptions": {
-    "skipLibCheck": true,
-    "target": "ES2020",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "rootDir": "src",
-    "outDir": "dist",
-    "esModuleInterop": true,
+    "target": "ES2022",
+    "module": "commonjs",
     "strict": true,
-    "types": ["node", "express", "multer"]
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "include": ["src"]
 }
