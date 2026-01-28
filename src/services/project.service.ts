@@ -3,13 +3,13 @@ import { pool } from "../config/db";
 import { supabase } from "../config/supabase";
 import fs from "fs";
 
-// Create a project
+
 export const createProject = async (
   title: string,
   location: string,
   folder: string
 ) => {
-  // Use Postgres via Supabase
+  
   const { data, error } = await supabase
     .from("projects")
     .insert([{ title, location, cloudinary_folder: folder }])
@@ -20,7 +20,7 @@ export const createProject = async (
   return data;
 };
 
-// Upload multiple images for a project
+
 export const uploadProjectImages = async (
   projectId: number,
   files: Express.Multer.File[],
@@ -43,11 +43,11 @@ export const uploadProjectImages = async (
 
     uploadedImages.push({ id: data.id, publicId: upload.public_id, url: upload.secure_url });
 
-    // remove temp file
+  
     try {
       fs.unlinkSync(file.path);
     } catch (e) {
-      // ignore
+      console.error("FILE DELETE ERROR:", e); 
     }
   }
 
@@ -55,7 +55,7 @@ export const uploadProjectImages = async (
 };
 
 
-// Get all projects with images
+
 export const getAllProjectsWithImages = async () => {
   const { data, error } = await supabase
     .from("projects")

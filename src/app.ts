@@ -8,6 +8,9 @@ const app = express();
 app.use(cors({ origin: "*" }));
 
 app.use(express.json());
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.use("/api/contact", contactLimiter, contactRoutes);
 app.use('/', ProjectRoutes);

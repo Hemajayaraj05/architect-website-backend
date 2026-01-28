@@ -1,4 +1,4 @@
-import transporter from "../config/mail.config";
+import sgMail from "../config/mail.config";
 
 interface ContactPayload {
   name: string;
@@ -12,9 +12,13 @@ interface ContactPayload {
 const companyEmails = process.env.COMPANY_EMAILS!.split(",");
 
 export const sendMailToCompany = async (data: ContactPayload) => {
-  return transporter.sendMail({
-    from: `"Website Contact" <${process.env.EMAIL_USER}>`,
+  return sgMail.send({
+    from: {
+      email: process.env.EMAIL_FROM!,
+      name: "Website Contact",
+    },
     to: companyEmails,
+    replyTo: data.email, // IMPORTANT
     subject: "New Appointment Request",
     html: `
       <h3>New Appointment</h3>
@@ -29,14 +33,17 @@ export const sendMailToCompany = async (data: ContactPayload) => {
 };
 
 export const sendMailToUser = async (data: ContactPayload) => {
-  return transporter.sendMail({
-    from: `"Architectural Studio" <${process.env.EMAIL_USER}>`,
+  return sgMail.send({
+    from: {
+      email: process.env.EMAIL_FROM!,
+      name: "Architectural Studio",
+    },
     to: data.email,
     subject: "Appointment Received",
     html: `
       <p>Hi ${data.name},</p>
       <p>Thank you for contacting us.</p>
-      <p>We’ll reach out to you shortly.</p>
+      <p>We’ve received your appointment request and will reach out shortly.</p>
       <br/>
       <p>— Architectural Studio Team</p>
     `,
