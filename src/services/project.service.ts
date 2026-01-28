@@ -1,29 +1,41 @@
 import cloudinary from "../config/cloudinary.config";
 import { supabase } from "../config/supabase";
-import fs from "fs";
-import type { Request } from "express";
-
+import streamifier from "streamifier";
 
 export const createProjectWithFolder = async (title: string, location: string) => {
   const { data, error } = await supabase
     .from("projects")
     .insert([{ title, location }])
-    .select("id, title, location")
+    .select()
     .single();
 
   if (error) throw error;
 
   const folder = `projects/project_${data.id}`;
 
-  const { data: updated, error: updateError } = await supabase
+  await supabase
     .from("projects")
     .update({ cloudinary_folder: folder })
-    .eq("id", data.id)
-    .select()
-    .single();
+    .eq("id", data.id);
 
-  if (updateError) throw updateError;
-  return updated;
+  return { ...data, cloudinary_folder: folder };
+};
+
+const uploadToCloudinary = (
+  file: Express.Multer.File,
+  folder: string
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
 };
 
 export const uploadProjectImages = async (
@@ -31,10 +43,10 @@ export const uploadProjectImages = async (
   files: Express.Multer.File[],
   folder: string
 ) => {
-  const uploadedImages = [];
+  const uploaded = [];
 
   for (const file of files) {
-    const upload = await cloudinary.uploader.upload(file.path, { folder });
+    const upload = await uploadToCloudinary(file, folder);
 
     const { data, error } = await supabase
       .from("project_images")
@@ -50,66 +62,50 @@ export const uploadProjectImages = async (
 
     if (error) throw error;
 
-    uploadedImages.push({
+    uploaded.push({
       id: data.id,
-      publicId: upload.public_id,
       url: upload.secure_url,
+      publicId: upload.public_id,
     });
-
-    fs.unlinkSync(file.path);
   }
 
-  return uploadedImages;
+  return uploaded;
 };
 
 export const getProjectFolder = async (projectId: number) => {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("projects")
     .select("cloudinary_folder")
     .eq("id", projectId)
     .single();
 
-  if (error) throw error;
   return data?.cloudinary_folder;
 };
 
 export const getAllProjectsWithImages = async () => {
-  const { data, error } = await supabase
-    .from("projects")
-    .select(`
-      id,
-      title,
-      location,
-      project_images (
-        id,
-        secure_url,
-        public_id
-      )
-    `)
-    .order("id", { ascending: false });
+  const { data } = await supabase.from("projects").select(`
+    id,
+    title,
+    location,
+    project_images ( id, secure_url, public_id )
+  `);
 
-  if (error) throw error;
-
-  return data.map((p: any) => ({
+  return data?.map((p: any) => ({
     id: p.id,
     title: p.title,
     location: p.location,
-    images: (p.project_images || []).map((i: any) => ({
-      id: i.id,
-      url: i.secure_url,
-      publicId: i.public_id,
-    })),
+    images: p.project_images || [],
   }));
 };
 
 export const deleteProjectImage = async (imageId: number) => {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("project_images")
     .select("public_id")
     .eq("id", imageId)
     .single();
 
-  if (error) throw error;
+  if (!data) return;
 
   await cloudinary.uploader.destroy(data.public_id);
   await supabase.from("project_images").delete().eq("id", imageId);
