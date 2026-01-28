@@ -2,7 +2,7 @@ import cloudinary from "../config/cloudinary.config";
 import { supabase } from "../config/supabase";
 import fs from "fs";
 
-// Create a project
+
 export const createProject = async (title: string, location: string, folder: string) => {
   const { data, error } = await supabase
     .from("projects")
@@ -14,7 +14,7 @@ export const createProject = async (title: string, location: string, folder: str
   return data;
 };
 
-// Upload project images
+
 export const uploadProjectImages = async (
   projectId: number,
   files: Express.Multer.File[],
@@ -37,7 +37,6 @@ export const uploadProjectImages = async (
 
     uploadedImages.push({ id: data.id, publicId: upload.public_id, url: upload.secure_url });
 
-    // Delete local file after upload
     try {
       fs.unlinkSync(file.path);
     } catch (e) {
@@ -48,7 +47,7 @@ export const uploadProjectImages = async (
   return uploadedImages;
 };
 
-// Get all projects with images
+
 export const getAllProjectsWithImages = async () => {
   const { data, error } = await supabase
     .from("projects")
@@ -81,7 +80,7 @@ export const getAllProjectsWithImages = async () => {
   }));
 };
 
-// Delete a project image
+
 export const deleteProjectImage = async (imageId: number) => {
   const { data, error } = await supabase
     .from("project_images")
@@ -97,7 +96,7 @@ export const deleteProjectImage = async (imageId: number) => {
   await supabase.from("project_images").delete().eq("id", imageId);
 };
 
-// Get project folder
+
 export const getProjectFolder = async (projectId: number) => {
   const { data, error } = await supabase
     .from("projects")
@@ -109,7 +108,7 @@ export const getProjectFolder = async (projectId: number) => {
   return data?.cloudinary_folder;
 };
 
-// Create project and folder
+
 export const createProjectWithFolder = async (title: string, location: string) => {
   const { data, error } = await supabase
     .from("projects")

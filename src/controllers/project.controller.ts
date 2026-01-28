@@ -7,7 +7,7 @@ import {
   getProjectFolder,
 } from "../services/project.service";
 
-// Create a new project
+
 export const createProjectController = async (req: Request, res: Response) => {
   try {
     const { title, location } = req.body;
@@ -28,12 +28,12 @@ export const createProjectController = async (req: Request, res: Response) => {
   }
 };
 
-// Upload images to a project
+
 export const uploadImagesController = async (req: Request, res: Response) => {
   const projectId = Number(req.params.projectId);
 
-  // Cast req.files safely
-  const files = req.files as Express.Multer.File[];
+ 
+  const files = req.files as any[];
 
   if (!files || files.length === 0) {
     return res.status(400).json({ message: "No images provided" });
@@ -47,7 +47,7 @@ export const uploadImagesController = async (req: Request, res: Response) => {
   res.json(imageUrls);
 };
 
-// Get all projects with images
+
 export const getProjectsController = async (req: Request, res: Response) => {
   try {
     const projects = await getAllProjectsWithImages();
@@ -58,7 +58,6 @@ export const getProjectsController = async (req: Request, res: Response) => {
   }
 };
 
-// Delete a project image
 export const deleteImageController = async (req: Request, res: Response) => {
   try {
     const imageId = Number(req.params.imageId);
