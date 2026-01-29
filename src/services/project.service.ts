@@ -110,3 +110,25 @@ export const deleteProjectImage = async (imageId: number) => {
   await cloudinary.uploader.destroy(data.public_id);
   await supabase.from("project_images").delete().eq("id", imageId);
 };
+
+
+export const deleteProjectById = async (projectId: number) => {
+
+  const { data: images } = await supabase
+    .from("project_images")
+    .select("public_id")
+    .eq("project_id", projectId);
+
+ 
+  if (images?.length) {
+    for (const img of images) {
+      await cloudinary.uploader.destroy(img.public_id);
+    }
+  }
+
+  
+  await supabase.from("project_images").delete().eq("project_id", projectId);
+
+  
+  await supabase.from("projects").delete().eq("id", projectId);
+};

@@ -6,7 +6,9 @@ import {
   deleteProjectImage,
   getProjectFolder,
 } from "../services/project.service";
-
+import {
+  deleteProjectById, 
+} from "../services/project.service";
 export const createProjectController: RequestHandler = async (req, res) => {
   try {
     const { title, location } = req.body;
@@ -52,4 +54,17 @@ export const deleteImageController: RequestHandler = async (req, res) => {
 
   await deleteProjectImage(imageId);
   res.json({ message: "Image deleted successfully" });
+};
+
+
+export const deleteProjectController: RequestHandler = async (req, res) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    if (!projectId) return res.status(400).json({ message: "Invalid project id" });
+
+    await deleteProjectById(projectId);
+    res.json({ message: "Project deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
 };

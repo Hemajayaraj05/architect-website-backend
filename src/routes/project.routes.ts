@@ -4,7 +4,7 @@ import {
   createProjectController,
   uploadImagesController,
   getProjectsController,
-  deleteImageController,
+  deleteImageController,deleteProjectController
 } from "../controllers/project.controller";
 
 const router = Router();
@@ -25,5 +25,5 @@ router.post(
 router.get("/projects", getProjectsController);
 
 router.delete("/projects/images/:imageId", deleteImageController);
-
+router.delete("/projects/:projectId", deleteProjectController);
 export default router;
