@@ -13,6 +13,11 @@ app.use(express.json());
 // }
 app.set("trust proxy", 1);
 
+// Health endpoint used by an external uptime monitor ping every 14 minutes.
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use("/api/contact", contactLimiter, contactRoutes);
 app.use('/', ProjectRoutes);
 app.use('/', reviewRoutes);
