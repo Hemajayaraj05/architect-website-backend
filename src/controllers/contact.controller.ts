@@ -10,7 +10,7 @@ export const submitContact = async (req: Request, res: Response) => {
 
     return res.status(200).json({ message: "Emails sent successfully" });
   } catch (error: any) {
-    console.error("MAIL ERROR:", error);
+    console.error("MAIL ERROR:", JSON.stringify(error, null, 2));
 
     return res.status(500).json({
       message: "Email service unavailable",
